@@ -13,9 +13,22 @@ This is my master class - Nodejs Rest Service
 
 ## Service requirement - TODO
 
-* /users [post] 
-* /tokens [post]
-* /checks [post]
+* /users 
+[post] -- create a user
+[get] -- get a user with phone# (querystring) and a valid token in header.
+[put] -- update user data and a valid token in header
+[delete] -- delete user data with phone# (querystring) and remove any associated url checks and a valid token in header
+* /tokens 
+[post] -- create a token id (20char alphanumeric) with phone# and password
+[get] -- get token data with id (querystring). Need a valid token in header.
+[put] -- update token data. Need a valid token in header.
+[delete] -- delete token data with phone# (querystring). Need a valid token in header.
+
+* /checks (checks represents monitoring of a given url)
+[post] -- create a check and update user object with check Id (20char alphanumeric)
+[get] -- get check data. Need a valid token in header.
+[put] -- update check data. Need a valid token in header.
+[delete] -- delete check data with Check id# (querystring) and remove check id from user object. Need a valid token in header.
 
 
  ## Https Server
