@@ -4,7 +4,19 @@ This is my master class - Nodejs Rest Service
 ## Project structure
 * 'index.js' : This file starts the node server;
 * 'config.js' : This file contain envioronment configuration.  For now we use staging and production.  Staging defaulted.
-* `/https/' : This folder contains the certificates  and key for https
+* '/https/' : This folder contains the certificates  and key for https
+* '/lib/'   : This folder contains helper modules
+* '/lib/handlers.js' :  Module to handle incoming request [Get, Post, Put, Delete] on /Users /Ping /tokens /checks
+* '/lib/helpers.js'  :  Module to common functions
+* '/lib/config.js'   :  TODO: Currently under root, but eventually will be moved under this folder. 
+* './.data/'    :  .data directory was create with sub directory of /users and /tokens to store appropriate data from request calls.  Eventually this can be a database call.
+
+## Service requirement - TODO
+
+* /users [post] 
+* /tokens [post]
+* /checks [post]
+
 
  ## Https Server
 To setup https you need openssl to create key and cert.  Download open ssl from http://slproweb.com/products/Win32OpenSSL.html.

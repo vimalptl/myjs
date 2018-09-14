@@ -3,8 +3,16 @@ var http = require("http");
 var https = require("https");
 var url = require("url");
 var StringDecoder = require("string_decoder").StringDecoder;
-var config = require('./config.js');
+var config = require('./config');
 var fs = require("fs");
+var handlers = require('./lib/handlers');
+var helpers = require('./lib/helpers');
+
+//TODO Get Rid of this
+helpers.sendTwilioSMS("8183046189", "Hello", function(err) {
+    console.log("Twilio SMS Test");
+    console.log("Any error? ", err);
+});
 
 // Instantiate the server
 var httpServer = http.createServer((req, res) => {
@@ -65,7 +73,7 @@ var unifiedServer = (req, res) => {
             'queryStringObject' : queryStringObject,
             'method'  : method,
             'headers' : headers,
-            'payload' : buffer
+            'payload' : helpers.parseJsonToObject(buffer)
         };
 
         // Rout the request to the handler specified in the router
@@ -92,29 +100,12 @@ var unifiedServer = (req, res) => {
 };
 
 
-// defin3e a handler
-var handlers  = {};
-
-// sample handler
-handlers.ping = function (data, callback) {
-    // callback a http status code, and a payload object
-    callback(200);
-};
-
-// sample handler
-handlers.hello = function (data, callback) {
-    // callback a http status code, and a payload object
-    callback(200, { 'message': "Hello world, this is my first rest service with nodejs  :) "});
-};
-
-// not founct hander
-handlers.notfound = function (data, callback) {
-    // callback a http status code, and a payload object
-    callback(404);
-};
 
 // Define a router
 var router = {
     'ping' : handlers.ping,
-    'hello' : handlers.hello
+    'hello' : handlers.hello,
+    'users' : handlers.users,
+    'tokens' : handlers.tokens,
+    'checks' : handlers.checks
 };
