@@ -4,7 +4,7 @@
 
 // Dependencies
 var crypto = require('crypto');
-var config = require('../config');
+var config = require('./config');
 var https = require('https');
 var querystring = require('querystring');
 

@@ -3,13 +3,14 @@ This is my master class - Nodejs Rest Service
 
 ## Project structure
 * 'index.js' : This file starts the node server;
-* 'config.js' : This file contain envioronment configuration.  For now we use staging and production.  Staging defaulted.
 * '/https/' : This folder contains the certificates  and key for https
 * '/lib/'   : This folder contains helper modules
 * '/lib/handlers.js' :  Module to handle incoming request [Get, Post, Put, Delete] on /Users /Ping /tokens /checks
 * '/lib/helpers.js'  :  Module to common functions
-* '/lib/config.js'   :  TODO: Currently under root, but eventually will be moved under this folder. 
-* './.data/'    :  .data directory was create with sub directory of /users and /tokens to store appropriate data from request calls.  Eventually this can be a database call.
+* '/lib/config.js' : This file contain envioronment configuration.  For now we use staging and production.  Staging defaulted.
+* '/lib/data.js  :  Instead of database we will be using files to store data, this is the file handling object.  This will use the .data directory for storage.
+* '/lib/server.js' :  Server Init and functions
+* './.data/'    :  .data directory was create with sub directory of /users, /checks and /tokens to store appropriate data from request calls.  Eventually this can be a database call.
 
 ## Service requirement - TODO
 

@@ -5,7 +5,8 @@
 // Dependencies
 var _data= require('./data');
 var helpers = require('./helpers');
-var config = require('../config');
+var config = require('./config');
+
 // defin3e a handler
 var handlers  = {};
 
