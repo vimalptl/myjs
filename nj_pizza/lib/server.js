@@ -17,10 +17,10 @@ var path = require('path');
 var server = {};
 
 //TODO Get Rid of this
-// helpers.sendTwilioSMS("8183046189", "Hello", function(err) {
-//     console.log("Twilio SMS Test");
-//     console.log("Any error? ", err);
-// });
+//  helpers.sendTwilioSMS("8183046189", "Hello", function(err) {
+//      console.log("Twilio SMS Test");
+//      console.log("Any error? ", err);
+//  });
 
 // Instantiate the server
 server.httpServer = http.createServer((req, res) => {
@@ -108,7 +108,7 @@ server.router = {
     'hello' : handlers.hello,
     'users' : handlers.users,
     'tokens' : handlers.tokens,
-    'checks' : handlers.checks
+    'menus' : handlers.menus
 };
 
 // Init script
