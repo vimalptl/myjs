@@ -269,6 +269,7 @@ handlers._tokens.post = function(data, callback) {
                     // if valid, create a new token with a random name, Set expiration data 1 hour in future
                     var tokenId = helpers.createRandomString(20);
                     var expires = Date.now() + 1000 * 60 * 60;
+
                     var tokenObject = {
                         'email' : email,
                         'id' : tokenId,
@@ -456,6 +457,149 @@ handlers._menus.put = function(data, callback) {
 handlers._menus.delete = function(data, callback) {
     callback(200);
 };
+
+// cart
+handlers.cart = function(data, callback) {
+    var acceptableMethods = ['post', 'get', 'put','delete'];
+    if (acceptableMethods.indexOf(data.method) > -1) {
+        handlers._cart[data.method](data,callback);
+    } else {
+        callback(405);
+    }
+};
+
+// Container for all the tokens methods
+handlers._cart =  {};
+
+
+// Cart - Post
+// Requred data: id (generated not included), email, itemcode, count
+// Optional Data: token in header
+handlers._cart.post = function(data, callback) {
+    var email = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
+    var itemCode = typeof(data.payload.itemcode) == 'string' &&  data.payload.itemcode.trim().length > 0  ?  data.payload.itemcode.trim() : false;
+//    var successCodes = typeof(data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes : false;
+    var count = typeof(data.payload.count) == 'number' &&  data.payload.count >= 1  ? data.payload.count : false; 
+    // TODO: Validate email and itemCode before saving to cart
+    console.log("email: " + email + " itemCode: " + itemCode + " count:" + count)
+    if (email && itemCode && count) {
+        // Get token from the headers
+        var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+        // Lookup the user by reading the token
+        _data.read('tokens', token, function(err, tokenData) {
+            if (!err && tokenData) {
+                var userEmail = tokenData.email;
+                // look up cart based on token - cart will exist as long as token exist
+                _data.read('carts',tokenData.id, function(err, cartData) {
+                    // if cart exist than add to cart else create
+                    if (!err && cartData) {
+                        var itemLists = typeof(cartData.itemlists) == 'object' && cartData.itemlists instanceof Array ? cartData.itemlists : [];                        
+                        // add to itemList
+                        var itemObject = {
+                            'code' : itemCode,
+                            'count' : count
+                        };
+                        // Add the itemObject to the carts itemlist
+                        cartData.itemlists = itemLists;
+                        cartData.itemlists.push(itemObject);
+                        // Save the new cart Data
+                        _data.update('carts',tokenData.id,cartData, function(err) {
+                            if (!err) {
+                                callback(200);
+                            } else {
+                                callback(500, {'Error':'Could not update the cart with the new item'});
+                            }
+                        });
+                    } else {
+                        // create the check object, and include the user phone
+                        var cartObject = {
+                            'id' : tokenData.id,
+                            'email' : userEmail,
+                            'itemlists' : [ {
+                                'code' : itemCode,
+                                'count' : count
+                            }]
+                        };
+                        //Store the Cart
+                        _data.create('carts', tokenData.id, cartObject, function(err) {
+                            if (err) {
+                                callback(500, {'Error':'Could not create a new cart'})
+                            } else {
+                                callback(200);
+                            }
+                        });                            
+                    }
+                });
+            } else {
+                callback(403);
+            }
+        });
+
+    } else {
+        callback(400, { 'Error': 'Missing required inputs, or inputs are invalid'});
+    }
+};
+
+// Cart - Get
+// Requred data: token in header - cart is based on token for now
+// Optional Data: token in header
+handlers._cart.get = function(data, callback) {
+    // retrieve token
+    var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+    // lcok up cart
+    _data.read('carts', token, function(err, cartData) {
+        if (!err && cartData) { 
+            // verify the given token is valid for the email#
+            handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
+                if (tokenIsValid) {    
+                    callback(200,cartData);
+                } else {
+                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
+                }
+            });
+        } else {
+            callback(400, {'Error': 'Cart does not exist'});
+        }  
+    });
+}
+
+// Cart - Put
+// Requred data: code, count
+// Optional Data: id and token in header
+handlers._cart.put = function(data, callback) {
+// TODO - implement later
+};
+
+// cart - Delete
+// Required data: token in header
+// Optional Data: token in header
+handlers._cart.delete = function(data, callback) {
+    // retrieve token 
+    var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+    // look up cart
+    _data.read('carts', token, function(err, cartData) {
+        if (!err && cartData) { 
+            // verify the given token is valid for the email#
+            handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
+                if (tokenIsValid) {    
+                    // delete cart :)
+                    _data.delete('carts',token, function(err) {
+                        if (!err) {
+                                callback(200);
+                        } else {
+                            callback(500, {'Error': 'Could not delete the specified cart'});
+                        }
+                     }); 
+                } else {
+                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
+                }
+            });
+        } else {
+            callback(400, {'Error': 'Cart does not exist'});
+        }  
+    });  
+};
+
 
 
 
