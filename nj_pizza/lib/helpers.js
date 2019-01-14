@@ -8,7 +8,6 @@ var config = require('./config');
 var https = require('https');
 var querystring = require('querystring');
 
-
 // Init Container
 var helpers = {};
 
@@ -107,6 +106,8 @@ helpers.sendTwilioSMS = function(phone, msg, callback) {
         callback("Given parameters where missing or invalid");
     }
 };
+
+
 
 // Export the module
 module.exports = helpers;

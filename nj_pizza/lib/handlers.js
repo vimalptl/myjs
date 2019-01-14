@@ -480,6 +480,210 @@ handlers._cart.post = function(data, callback) {
     var itemCode = typeof(data.payload.itemcode) == 'string' &&  data.payload.itemcode.trim().length > 0  ?  data.payload.itemcode.trim() : false;
 //    var successCodes = typeof(data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes : false;
     var count = typeof(data.payload.count) == 'number' &&  data.payload.count >= 1  ? data.payload.count : false; 
+    // User integer value only for node class  eg. 10.00 as 1000
+    var price = typeof(data.payload.price) == 'number' &&  data.payload.price >= 0  ? data.payload.price : false; 
+    // TODO: Validate email and itemCode before saving to cart
+    //console.log("email: " + email + " itemCode: " + itemCode + " count:" + count + " price:" + price)
+    if (email && itemCode && count && price) {
+        // Get token from the headers
+        var token = typeof(data.headers.token) == 'string' && data.headers.token.trim().length > 0 ? data.headers.token.trim() : false;
+        // Lookup the user by reading the token
+        _data.read('tokens', token, function(err, tokenData) {
+            if (!err && tokenData) {
+                var userEmail = tokenData.email;
+                // look up cart based on token - cart will exist as long as token exist
+                _data.read('carts',tokenData.id, function(err, cartData) {
+                    // if cart exist than add to cart else create
+                    if (!err && cartData) {
+                        var itemLists = typeof(cartData.itemlists) == 'object' && cartData.itemlists instanceof Array ? cartData.itemlists : [];                        
+                        // add to itemList
+                        var itemObject = {
+                            'code' : itemCode,
+                            'count' : count,
+                            'price' : price,
+                            'total' : price * count
+                        };
+                        // Add the itemObject to the carts itemlist
+                        cartData.itemlists = itemLists;
+                        cartData.itemlists.push(itemObject);
+                        // Save the new cart Data
+                        _data.update('carts',tokenData.id,cartData, function(err) {
+                            if (!err) {
+                                // TODO -- calculate total balance price of all items in the list.
+                                // lets add sales tax of 10% -- govt is little too greedy :)
+                                // this can be done by summing up the total.                                                               
+                                handlers._cart.calcCartTotals(tokenData.id, function(calcd) {
+                                    if (!calcd) {
+                                        callback(500, {'Error' : 'Could not calculate cart totals'});
+                                    }
+                                });                                                          
+                                callback(200);
+                            } else {
+                                callback(500, {'Error':'Could not update the cart with the new item'});
+                            }
+                        });
+                    } else {
+                        // create the check object, and include the user phone
+                        var total = price * count;
+                        var cartObject = {
+                            'id' : tokenData.id,
+                            'email' : userEmail,
+                            'itemlists' : [ {
+                                'code' : itemCode,
+                                'count' : count,
+                                'price' : price,
+                                'total' : total
+                            }],
+                            'totals' : 0,
+                            'taxes' : 0,
+                            'pay' : 0
+                        };
+                        //Store the Cart
+                        _data.create('carts', tokenData.id, cartObject, function(err) {
+                            if (err) {
+                                callback(500, {'Error':'Could not create a new cart'});
+                            } else {
+                                // TODO -- calculate total price of all items in the list.
+                                // this can be done by summing up the total.      
+                                handlers._cart.calcCartTotals(tokenData.id, function(calcd) {
+                                    if (!calcd) {
+                                        callback(500, {'Error' : 'Could not calculate cart totals'});
+                                    }
+                                });                                                          
+                                callback(200);
+                            }
+                        });                            
+                    }
+                });
+            } else {
+                console.log("Forbidden here");
+                callback(403);
+            }
+        });
+
+    } else {
+        callback(400, { 'Error': 'Missing required inputs, or inputs are invalid'});
+    }
+};
+
+// Cart - Get
+// Requred data: token in header - cart is based on token for now
+// Optional Data: token in header
+handlers._cart.get = function(data, callback) {
+    // retrieve token
+    var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+    // lcok up cart
+    _data.read('carts', token, function(err, cartData) {
+        if (!err && cartData) { 
+            // verify the given token is valid for the email#
+            handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
+                if (tokenIsValid) {    
+                    callback(200,cartData);
+                } else {
+                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
+                }
+            });
+        } else {
+            callback(400, {'Error': 'Cart does not exist'});
+        }  
+    });
+}
+
+// Calculate cart totals
+handlers._cart.calcCartTotals = function(cartId, callback) {
+   cartId = typeof(cartId) == 'string' && cartId.length > 0 ? cartId : false;
+    if (cartId) {
+               // look up cart based on token - cart will exist as long as token exist
+               _data.read('carts',cartId, function(err, cartData) {
+                // if cart exist than add to cart else create
+                if (!err && cartData) {
+                    var itemLists = typeof(cartData.itemlists) == 'object' && cartData.itemlists instanceof Array ? cartData.itemlists : [];                        
+                    // Loop thought Items and calculate the totals         
+                    var totalPrice = 0;
+                    itemLists.forEach(item => {  
+                        totalPrice = totalPrice + item.total 
+                    });
+                    cartData.totals = totalPrice;
+                    cartData.taxes = Math.round(totalPrice *  (config.salestax / 100));
+                    cartData.pay = cartData.totals + cartData.taxes;
+                    // Save the new cart Data
+                    _data.update('carts',cartId,cartData, function(err) {
+                        if (!err) {
+                            // TODO -- calculate total balance price of all items in the list.
+                            // lets add sales tax of 10% -- govt is little too greedy :)
+                            // this can be done by summing up the total.                                                                
+                            callback(true);
+                        } else {
+                            callback(false);
+                        }
+                    });
+                } else {
+                    callback(false);
+                }
+            });
+
+    };
+};
+
+
+// Cart - Put
+// Requred data: code, count
+// Optional Data: id and token in header
+handlers._cart.put = function(data, callback) {
+// TODO - implement later
+};
+
+// cart - Delete
+// Required data: token in header
+// Optional Data: token in header
+handlers._cart.delete = function(data, callback) {
+    // retrieve token 
+    var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+    // look up cart
+    _data.read('carts', token, function(err, cartData) {
+        if (!err && cartData) { 
+            // verify the given token is valid for the email#
+            handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
+                if (tokenIsValid) {    
+                    // delete cart :)
+                    _data.delete('carts',token, function(err) {
+                        if (!err) {
+                                callback(200);
+                        } else {
+                            callback(500, {'Error': 'Could not delete the specified cart'});
+                        }
+                     }); 
+                } else {
+                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
+                }
+            });
+        } else {
+            callback(400, {'Error': 'Cart does not exist'});
+        }  
+    });  
+};
+
+
+// orders
+handlers.orders = function(data, callback) {
+    var acceptableMethods = ['post', 'get', 'put','delete'];
+    if (acceptableMethods.indexOf(data.method) > -1) {
+        handlers._orders[data.method](data,callback);
+    } else {
+        callback(405);
+    }
+};
+
+// Container for all the tokens methods
+handlers._orders =  {};
+
+
+// orders - Post
+// Requred data: orderId (generated not included)
+// based on session id retrieve cart and move create an order
+// Optional Data: token in header
+handlers._orders.post = function(data, callback) {
+    var email = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
     // TODO: Validate email and itemCode before saving to cart
     console.log("email: " + email + " itemCode: " + itemCode + " count:" + count)
     if (email && itemCode && count) {
@@ -538,21 +742,21 @@ handlers._cart.post = function(data, callback) {
     } else {
         callback(400, { 'Error': 'Missing required inputs, or inputs are invalid'});
     }
-};
+}
 
-// Cart - Get
-// Requred data: token in header - cart is based on token for now
+// orders - Get
+// Requred data: orderId
 // Optional Data: token in header
-handlers._cart.get = function(data, callback) {
+handlers._orders.get = function(data, callback) {
     // retrieve token
     var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
     // lcok up cart
-    _data.read('carts', token, function(err, cartData) {
-        if (!err && cartData) { 
+    _data.read('orders', orderId, function(err, orderData) {
+        if (!err && orderData) { 
             // verify the given token is valid for the email#
-            handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
+            handlers._tokens.verifyToken(token, orderData.email, function(tokenIsValid) {
                 if (tokenIsValid) {    
-                    callback(200,cartData);
+                    callback(200,orderData);
                 } else {
                     callback(403, {'Error':'Missing requred token in header or token is invalid'});
                 }
@@ -563,43 +767,21 @@ handlers._cart.get = function(data, callback) {
     });
 }
 
-// Cart - Put
-// Requred data: code, count
+// Orders - Put
+// Requred data: orderId
 // Optional Data: id and token in header
-handlers._cart.put = function(data, callback) {
-// TODO - implement later
+handlers._orders.put = function(data, callback) {
+// TODO - Do I need to update an existing order!  Maybe not.
 };
 
-// cart - Delete
-// Required data: token in header
+// Orders - Delete
+// Required data: orderId
 // Optional Data: token in header
-handlers._cart.delete = function(data, callback) {
+handlers._orders.delete = function(data, callback) {
     // retrieve token 
     var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-    // look up cart
-    _data.read('carts', token, function(err, cartData) {
-        if (!err && cartData) { 
-            // verify the given token is valid for the email#
-            handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
-                if (tokenIsValid) {    
-                    // delete cart :)
-                    _data.delete('carts',token, function(err) {
-                        if (!err) {
-                                callback(200);
-                        } else {
-                            callback(500, {'Error': 'Could not delete the specified cart'});
-                        }
-                     }); 
-                } else {
-                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
-                }
-            });
-        } else {
-            callback(400, {'Error': 'Cart does not exist'});
-        }  
-    });  
+    // TODO :  Refund orders if not processed.
 };
-
 
 
 
