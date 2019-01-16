@@ -278,7 +278,15 @@ handlers._tokens.post = function(data, callback) {
                     //Store the token
                     _data.create('tokens', tokenId, tokenObject, function(err) {
                         if (!err) {
+                            // helpers.sendMailGunMail((errA) => {
+                            //     if (errA) {
+                            //         callback(403, {'Error':errA});
+                            //     } else {
+                            //         callback(200, tokenObject);
+                            //     }
+                            // });
                             callback(200, tokenObject);
+
                         } else {
                             callback(500, {'Error':'Could not create a new token'})
                         }
@@ -460,7 +468,7 @@ handlers._menus.delete = function(data, callback) {
 
 // cart
 handlers.cart = function(data, callback) {
-    var acceptableMethods = ['post', 'get', 'put','delete'];
+    var acceptableMethods = ['post', 'get', 'delete'];
     if (acceptableMethods.indexOf(data.method) > -1) {
         handlers._cart[data.method](data,callback);
     } else {
@@ -625,14 +633,6 @@ handlers._cart.calcCartTotals = function(cartId, callback) {
     };
 };
 
-
-// Cart - Put
-// Requred data: code, count
-// Optional Data: id and token in header
-handlers._cart.put = function(data, callback) {
-// TODO - implement later
-};
-
 // cart - Delete
 // Required data: token in header
 // Optional Data: token in header
@@ -666,7 +666,7 @@ handlers._cart.delete = function(data, callback) {
 
 // orders
 handlers.orders = function(data, callback) {
-    var acceptableMethods = ['post', 'get', 'put','delete'];
+    var acceptableMethods = ['get','delete'];
     if (acceptableMethods.indexOf(data.method) > -1) {
         handlers._orders[data.method](data,callback);
     } else {
@@ -678,71 +678,6 @@ handlers.orders = function(data, callback) {
 handlers._orders =  {};
 
 
-// orders - Post
-// Requred data: orderId (generated not included)
-// based on session id retrieve cart and move create an order
-// Optional Data: token in header
-handlers._orders.post = function(data, callback) {
-    var email = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
-    // TODO: Validate email and itemCode before saving to cart
-    console.log("email: " + email + " itemCode: " + itemCode + " count:" + count)
-    if (email && itemCode && count) {
-        // Get token from the headers
-        var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-        // Lookup the user by reading the token
-        _data.read('tokens', token, function(err, tokenData) {
-            if (!err && tokenData) {
-                var userEmail = tokenData.email;
-                // look up cart based on token - cart will exist as long as token exist
-                _data.read('carts',tokenData.id, function(err, cartData) {
-                    // if cart exist than add to cart else create
-                    if (!err && cartData) {
-                        var itemLists = typeof(cartData.itemlists) == 'object' && cartData.itemlists instanceof Array ? cartData.itemlists : [];                        
-                        // add to itemList
-                        var itemObject = {
-                            'code' : itemCode,
-                            'count' : count
-                        };
-                        // Add the itemObject to the carts itemlist
-                        cartData.itemlists = itemLists;
-                        cartData.itemlists.push(itemObject);
-                        // Save the new cart Data
-                        _data.update('carts',tokenData.id,cartData, function(err) {
-                            if (!err) {
-                                callback(200);
-                            } else {
-                                callback(500, {'Error':'Could not update the cart with the new item'});
-                            }
-                        });
-                    } else {
-                        // create the check object, and include the user phone
-                        var cartObject = {
-                            'id' : tokenData.id,
-                            'email' : userEmail,
-                            'itemlists' : [ {
-                                'code' : itemCode,
-                                'count' : count
-                            }]
-                        };
-                        //Store the Cart
-                        _data.create('carts', tokenData.id, cartObject, function(err) {
-                            if (err) {
-                                callback(500, {'Error':'Could not create a new cart'})
-                            } else {
-                                callback(200);
-                            }
-                        });                            
-                    }
-                });
-            } else {
-                callback(403);
-            }
-        });
-
-    } else {
-        callback(400, { 'Error': 'Missing required inputs, or inputs are invalid'});
-    }
-}
 
 // orders - Get
 // Requred data: orderId
@@ -767,22 +702,53 @@ handlers._orders.get = function(data, callback) {
     });
 }
 
-// Orders - Put
-// Requred data: orderId
-// Optional Data: id and token in header
-handlers._orders.put = function(data, callback) {
-// TODO - Do I need to update an existing order!  Maybe not.
-};
-
 // Orders - Delete
 // Required data: orderId
 // Optional Data: token in header
 handlers._orders.delete = function(data, callback) {
     // retrieve token 
     var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-    // TODO :  Refund orders if not processed.
+    // TODO :  Refund orders if not processed or paid.
 };
 
+// checkout
+handlers.checkout = function(data, callback) {
+    var acceptableMethods = ['post'];
+    if (acceptableMethods.indexOf(data.method) > -1) {
+        handlers._checkout[data.method](data,callback);
+    } else {
+        callback(405);
+    }
+};
+
+// Container for all the tokens methods
+handlers._checkout =  {};
+
+
+
+// checkout - post
+// checkout cart by making payment this should create and a paid order
+// Requred data: token in header and an available cart record.
+// Optional Data: token in header
+handlers._checkout.post = function(data, callback) {
+    // retrieve token
+    var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+    // lcok up cart
+    _data.read('orders', orderId, function(err, orderData) {
+        if (!err && orderData) { 
+            // verify the given token is valid for the email#
+            handlers._tokens.verifyToken(token, orderData.email, function(tokenIsValid) {
+                if (tokenIsValid) {    
+                    callback(200,orderData);
+                } else {
+                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
+                }
+            });
+        } else {
+            callback(400, {'Error': 'Cart does not exist'});
+        }  
+    });
+}
 
 
 // ping handler - can be used to monitor the process 

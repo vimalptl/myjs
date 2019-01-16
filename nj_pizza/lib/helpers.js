@@ -56,6 +56,75 @@ helpers.createRandomString = function(strLength) {
 };
 
 // Send SMS message via Twilio
+helpers.sendStripPayment = function(callback) {
+    // Set your secret key: remember to change this to your live secret key in production
+// See your keys here: https://dashboard.stripe.com/account/apikeys
+var stripe = require("stripe")(config.stripe.secretKey);
+
+    const charge = stripe.charges.create({
+    amount: 999,
+    currency: 'usd',
+    source: 'tok_visa',
+    receipt_email: 'vimalp@ri-net.com',
+    });
+
+};
+
+// Send mail with mailgun
+// to use free email test you have to register the recepient
+helpers.sendMailGunMail = function(toMail, subject, text, callback) {
+ 
+    var data = {
+    from: 'postmaster@sandboxecb7847e575040758fd44093e747a84b.mailgun.org',
+    to: toMail,
+    subject: subject,
+    text: text
+    };
+    
+        // Configure the request details
+        var stringPayLoad = querystring.stringify(data);
+        // Configure the request details
+        var requestDetails = {
+            'protocol' : 'https:',
+            'hostname' : 'api.mailgun.net',
+            'method' : 'POST',
+            'path' : '/v3/sandboxecb7847e575040758fd44093e747a84b.mailgun.org/messages',
+            'auth' : 'api:'+config.mailgun.apiKey,
+            'headers' : {
+            'Content-Type' : 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(stringPayLoad)
+            },
+            'data' : stringPayLoad
+        };
+        var req = https.request(requestDetails,function(res) {
+            // Grab the status of the sent request
+            var status = res.statusCode;
+            // Callback successfully if the request went through
+            if (status == 200 || status ==201) {
+                callback(false);
+            } else {
+                // Bind to the error event so it does not get thrown
+                req.on("data", function(e) {
+                    var data = e.toString();
+                    var dataObject = JSON.parse(data);                    
+                    callback(status, {'message': dataObject.message});
+                });
+            }
+        });
+
+        // Bind to the error event so it does not get thrown
+        req.on("error", function(e) {
+            callback(e);
+        });
+
+        // add the payload
+        req.write(stringPayLoad);
+        //end the request
+        req.end();
+}
+
+
+// Send SMS message via Twilio
 helpers.sendTwilioSMS = function(phone, msg, callback) {
     // validate parameters
     var phone = typeof(phone) == 'string' && phone.trim().length == 10 ? phone.trim() : false;

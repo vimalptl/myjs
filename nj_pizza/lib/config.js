@@ -26,7 +26,13 @@ environments.staging = {
         'authToken' : '9455e3eb3109edc12e3d8c92768f7a67',
         'fromPhone' : '+15005550006'
       },
-    'salestax' : 10
+    'salestax' : 10,
+    'stripe' : {
+        'secretKey' : 'sk_test_YKgft69cKLC0PiaHc14VAl6u'
+    },
+    'mailgun' : {
+        'apiKey' : '2f8d7233db369a52edae08bb4b7f1981-3939b93a-18441041'
+    }
  };
 
 
@@ -42,7 +48,13 @@ environments.production = {
         'authToken' : '9455e3eb3109edc12e3d8c92768f7a67',
         'fromPhone' : '+15005550006'
       },
-    'salestax' : 10
+    'salestax' : 10,
+    'stripe' : {
+        'secretKey' : 'sk_test_YKgft69cKLC0PiaHc14VAl6u'
+    },
+    'mailgun' : {
+        'apiKey' : '2f8d7233db369a52edae08bb4b7f1981-3939b93a-18441041'
+    }
 };
 
 // Determine which env was passed as commond-line argument

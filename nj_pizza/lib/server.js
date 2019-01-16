@@ -110,7 +110,8 @@ server.router = {
     'tokens' : handlers.tokens,
     'menus' : handlers.menus,
     'cart'  : handlers.cart,
-    'orders' : handlers.orders
+    'orders' : handlers.orders,
+    'checkout' : handlers.checkout
 };
 
 // Init script
