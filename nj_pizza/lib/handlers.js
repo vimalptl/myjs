@@ -278,15 +278,7 @@ handlers._tokens.post = function(data, callback) {
                     //Store the token
                     _data.create('tokens', tokenId, tokenObject, function(err) {
                         if (!err) {
-                            // helpers.sendMailGunMail((errA) => {
-                            //     if (errA) {
-                            //         callback(403, {'Error':errA});
-                            //     } else {
-                            //         callback(200, tokenObject);
-                            //     }
-                            // });
                             callback(200, tokenObject);
-
                         } else {
                             callback(500, {'Error':'Could not create a new token'})
                         }
