@@ -16,44 +16,32 @@ var environments = {};
 
 // default
 environments.staging = {
-    'httpPort' : 3000,
-    'httpsPort': 3001,
+    'httpPort' : 5000,
+    'httpsPort': 5001,
     'envName' : 'staging',
     'hashingSecret' : 'thisisasecret',
-    'maxChecks' : 5,
-    'twilio' : {
-        'accountSid' : 'ACb32d411ad7fe886aac54c665d25e5c5d',
-        'authToken' : '9455e3eb3109edc12e3d8c92768f7a67',
-        'fromPhone' : '+15005550006'
-      },
     'salestax' : 10,
     'stripe' : {
-        'secretKey' : 'sk_test_YKgft69cKLC0PiaHc14VAl6u'
+        'secretKey' : 'key here'
     },
     'mailgun' : {
-        'apiKey' : '2f8d7233db369a52edae08bb4b7f1981-3939b93a-18441041'
+        'apiKey' : 'key here'
     }
  };
 
 
  // Production 
 environments.production = {
-    'httpPort' : 5000,
-    'httpsPort': 5001,
+    'httpPort' : 6000,
+    'httpsPort': 6001,
     'envName' : 'production',
     'hashingSecret' : 'thisisalsoasecret',
-    'maxChecks' : 5,  
-    'twilio' : {
-        'accountSid' : 'ACb32d411ad7fe886aac54c665d25e5c5d',
-        'authToken' : '9455e3eb3109edc12e3d8c92768f7a67',
-        'fromPhone' : '+15005550006'
-      },
     'salestax' : 10,
     'stripe' : {
-        'secretKey' : 'sk_test_YKgft69cKLC0PiaHc14VAl6u'
+        'secretKey' : 'key here'
     },
     'mailgun' : {
-        'apiKey' : '2f8d7233db369a52edae08bb4b7f1981-3939b93a-18441041'
+        'apiKey' : 'key here'
     }
 };
 

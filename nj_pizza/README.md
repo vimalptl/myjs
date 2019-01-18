@@ -1,6 +1,22 @@
 # Node JS -  Pizza Cart Project HW#2
 This is my master class - Nodejs Rest Service
 
+## Sample service calls.
+
+/tokens  -- login
+{ "email": ? , "password" : ?}
+
+/menus?menutype=pizza  -- retrieve menu
+
+/cart  -- add to cart
+{  "email" : ?, "itemcode" : "P10IGFCZ","count" : 2, "price" : 1199}
+
+/checkout   -- complete cart -- currently addition card details carry no value since we are using stripe sandbox.
+{ "name" : "Vimal Patel", "cardnbr" : 378282246310005,"expdate" : 102020,"cvv" : 443}
+
+/tokens?id=tokenId  -- logout
+
+
 ## Project structure
 * 'index.js' : This file starts the node server;
 * '/https/' : This folder contains the certificates  and key for https
@@ -14,23 +30,23 @@ This is my master class - Nodejs Rest Service
 
 ## Service requirement
 1. New users can be created, their information can be edited, and they can be deleted. We should store their name, email address, and street address.
-2. Users can log in and log out by creating or destroying a token.
+2. Users can log in and log out by creating (use post /tokens) or destroying (use get /tokens?id=) a token.
 3. When a user is logged in, they should be able to GET all the possible menu items (these items can be hardcoded into the system). 
 4. A logged-in user should be able to fill a shopping cart with menu items
 5. A logged-in user should be able to create an order. 
 6. When an order is placed, you should email the user a receipt.
 
 * /menus
-[get] - Retrieve hard-coded pizza menu
-[post] - not implemented
-[put] - not implemented
-[delete] - not implemented
+[get] -- Retrieve hard-coded pizza menu  -- menu is retrieve regardless of weather you are logged in or not.
+      -- ?menutype=pizza
+
 * /users 
 [post] -- create a user
 [get] -- get a user with email# (querystring) and a valid token in header.
 [put] -- update user data and a valid token in header
 [delete] -- delete user data with email (querystring) and a valid token in header [TODO: deal with hangover orders]
-* /tokens 
+
+* /tokens  
 [post] -- create a token id (20char alphanumeric) with email# and password
 [get] -- get token data with id (querystring). Need a valid token in header.
 [put] -- update token data. Need a valid token in header.
@@ -39,8 +55,16 @@ This is my master class - Nodejs Rest Service
 * /cart (pizza cart for orders incurred within a token session)
 [post] -- create a cart order or add to cart order
 [get] -- get cart order based on token. Need a valid token in header.
-[put] -- not implemented for this exercise
-[delete] -- delete cart based on token. Need a valid token in header.
+
+* /orders (Orders incurred)
+[get] -- get order based on user. Need a valid token in header.
+
+* /checkout (Checkout Order)
+[post] -- Create an order
+       -- make payment based on cart.pay using Stripe, 
+       -- Add order to user profile to track user related orders,
+       -- remove cart if order was successfully proccessed by Stripe, 
+       -- email notification using MailGun.
 
 
  ## Https Server

@@ -55,28 +55,46 @@ helpers.createRandomString = function(strLength) {
     }
 };
 
+// List of test Cards for Stripe.com 
+helpers.testCardNumbers = function() {
+    return {
+        '4242424242424242'  : 'tok_visa',
+        '4000056655665556'  : 'tok_visa_debit',
+        '5555555555554444'  : 'tok_mastercard',
+        '5200828282828210'  : 'tok_mastercard_debit',
+        '5105105105105100'  : 'tok_mastercard_prepaid',
+        '378282246310005'   : 'tok_amex',
+        '6011111111111117'  : 'tok_discover',
+        '30569309025904'    : 'tok_diners',
+        '3566002020360505'  : 'tok_jcb',
+        '6200000000000005'  : 'tok_unionpay'
+    };
+}
+
 // Send payment via Stripe
 // return : status, transid, paid status
 // This is done in a complex way with native node implementation.
 /*  Usage:
-        helpers.sendStripePayment((res) => {
+        helpers.sendStripePayment(100,4242424242424242, 'Order number abcd', (res) => {
             if (res.status == 200 || res.status == 201) {
                 callback(200, ?);
             } else {         
                 callback(400, {'Error': res.message});
             }
+        });
 */
 helpers.sendStripePayment = function(amount, cardNbr, description, callback) {
     var amount = typeof(amount) == 'number' && amount > 0 ? amount : false;
-    var cardNbr = typeof(cardNbr) == 'number' && cardNbr > 0 ? cardNbr : false;
+    var cardNbr = typeof(cardNbr) == 'number' && cardNbr >= 0 ? cardNbr : false;
     var description = typeof(description) == 'string' && description.trim().length > 0 ? description.trim() : false; 
-
+    var cclist = this.testCardNumbers();
+    //console.log("amount: " + amount + " cardNbr: " + cardNbr + "desc: " + description + " cardToken: " + cclist[cardNbr]);
     if (amount && cardNbr && description) {
         var data = {
-            amount: 100,
+            amount: amount,
             currency: "usd",
-            source: "tok_visa", // obtained with Stripe.js
-            description: "Charge for vimalp@ri-net.com"
+            source: cclist[cardNbr], 
+            description: description
             };
             
                 // Configure the request details

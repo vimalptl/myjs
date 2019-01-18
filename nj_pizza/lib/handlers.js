@@ -41,7 +41,6 @@ handlers._users.post = function(data, callback) {
 
     if (firstName && lastName && email && address && password && tosAgreement) {
         // make sure that the user doesn't already exist
-        // we are using phone number as file name so we just have to check to see if it exist
         _data.read('users',email, function(err, data) {
            if (err) {
                // hash password.
@@ -54,7 +53,8 @@ handlers._users.post = function(data, callback) {
                     'address'  : address,
                     'email' : email,
                     'password' : hashedPassword,
-                    'tosAgreement' : tosAgreement
+                    'tosAgreement' : tosAgreement,
+                    'orders' : []
                 };
  
                 // store the user
@@ -196,26 +196,26 @@ handlers._users.delete = function(data, callback) {
                         if (!err && userData) {
                             _data.delete('users',email, function(err) {
                                if (!err) {
-                                   // Delete all checks associated with this user
-                                   var userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
-                                   var checksToDelete = userChecks.length;
-                                   if (checksToDelete > 0) {
-                                       // delete checks and keep track of how many were deleted
-                                      var checksDeleted = 0;
+                                   // Delete all orders associated with this user
+                                   var userOrders = typeof(userData.orders) == 'object' && userData.orders instanceof Array ? userData.orders : [];
+                                   var ordersToDelete = userOrders.length;
+                                   if (ordersToDelete > 0) {
+                                       // delete orders and keep track of how many were deleted
+                                      var ordersDeleted = 0;
                                       //  Error flag on delete.
                                       var deletionErrors = false;
-                                      userChecks.forEach(checkId => {
+                                      userOrders.forEach(orderId => {
                                           // Delete Checks
-                                          _data.delete('checks',checkId, function(err) {
+                                          _data.delete('orders',orderId, function(err) {
                                             if (err) {
                                                 deletionErrors = true;
                                             }
-                                            checksDeleted++;
-                                            if (checksDeleted == checksToDelete) {
+                                            ordersDeleted++;
+                                            if (ordersDeleted == ordersToDelete) {
                                                 if (!deletionErrors) {
                                                     callback(200);
                                                 }  else {
-                                                    callback(500, {'Error':'Errors Encountered while attempting to delete checsk related to tis user'})
+                                                    callback(500, {'Error':'Errors Encountered while attempting to delete order related to this user'})
                                                 }
                                             }   
                                           });
@@ -523,7 +523,7 @@ handlers._cart.post = function(data, callback) {
                             }
                         });
                     } else {
-                        // create the check object, and include the user phone
+                        // create the cart object, and include the user email
                         var total = price * count;
                         var cartObject = {
                             'id' : tokenData.id,
@@ -725,21 +725,104 @@ handlers._checkout =  {};
 handlers._checkout.post = function(data, callback) {
     // retrieve token
     var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-    // lcok up cart
-    _data.read('orders', orderId, function(err, orderData) {
-        if (!err && orderData) { 
-            // verify the given token is valid for the email#
-            handlers._tokens.verifyToken(token, orderData.email, function(tokenIsValid) {
-                if (tokenIsValid) {    
-                    callback(200,orderData);
-                } else {
-                    callback(403, {'Error':'Missing requred token in header or token is invalid'});
-                }
-            });
-        } else {
-            callback(400, {'Error': 'Cart does not exist'});
-        }  
-    });
+    // validate payment information
+    var name = typeof(data.payload.name) == 'string' &&  data.payload.name.trim().length > 0  ?  data.payload.name.trim() : false;
+    var cardNbr = typeof(data.payload.cardnbr) == 'number' && data.payload.cardnbr > 0 ? data.payload.cardnbr : false;
+    var expDate = typeof(data.payload.expdate) == 'number' && data.payload.expdate > 0 ? data.payload.expdate : false;
+    var cvv = typeof(data.payload.cvv) == 'number' && data.payload.cvv > 0 ? data.payload.cvv : false;
+    if (token && cardNbr) {
+        // lcok up cart and send total for payment.
+        _data.read('carts', token, function(err, cartData) {
+            if (!err && cartData) { 
+                // verify the given token is valid for the email#
+                handlers._tokens.verifyToken(token, cartData.email, function(tokenIsValid) {
+                    if (tokenIsValid) {
+                        // create order
+                        var orderId = helpers.createRandomString(10);
+                        var now = new Date();
+                        var jsonDate = now.toJSON();                    
+                        var orderObject = {
+                            'id' : orderId,
+                            'email' : cartData.email,
+                            'itemlists' : cartData.itemlists,
+                            'totals' : cartData.totals,
+                            'taxes' : cartData.taxes,
+                            'pay' : cartData.pay,
+                            'paymentid' : '',
+                            'paid' : false,
+                            'create_date' : jsonDate
+                        };
+                        console.log(orderObject.pay);
+                        // Send items in cart for payment
+                        helpers.sendStripePayment(cartData.pay,cardNbr, 'Order number #' + orderId, (res) => {
+                            if (res.status == 200 || res.status == 201) {
+                                // indicate order was processed 
+                                orderObject.paymentid = res.transId;
+                                orderObject.paid = res.paid;                                        
+                            } else {         
+                                orderObject.paid = false;
+                            }
+                        });                                                                
+
+                        // store and complete the order
+                        _data.create('orders', orderId, orderObject, function(err) {
+                            if (!err) {
+                                // Make Payment
+                                // Add the orderid to the user's object
+                                // look up user data
+                                _data.read('users',cartData.email, function(err, userData) {
+                                    if (!err && userData) {
+                                        var userOrders = typeof(userData.orders) == 'object' && userData.orders instanceof Array ? userData.orders : [];
+                                        userData.orders = userOrders;
+                                        userData.orders.push(orderId);
+
+                                        // Save the new user Data
+                                        _data.update('users',cartData.email,userData, function(err) {
+                                            if (!err) {
+                                                //    Notify user when order is complete
+                                                helpers.sendMailGunMail('vimalp@ri-net.com', 
+                                                                        'Pizza Order # '+ orderId + " processed", 
+                                                                        'Order was processed successfully.',
+                                                                        (err_res) => {
+                                                    if (!err_res) {
+                                                        // indicate order was processed
+                                                        // remove cart
+                                                        _data.delete('carts', token, (err) => {
+                                                             if (err) {
+                                                                callback(400, {'Error':'Could not remove cart...logout and log back in to process another order'});
+                                                            } else {
+                                                                callback(200, orderObject);                                        
+                                                             }
+                                                        })
+                                                    } else {         
+                                                        // mark order as failed.
+                                                        callback(400, {'Error':'Order # '+ orderId +' was created, but could not process email notification.'});
+                                                    }
+                                                });
+                                            } else {
+                                                callback(500, {'Error':'Could not update the user with the new order'});
+                                            }
+                                        });
+
+                                    } else {
+                                        callback(500, {'Error':'Could not retrieve user data'})
+                                    }
+                                });
+                            } else {
+                                callback(500, {'Error':'Could not create a new order'})
+                            }
+                        });
+                    } else {
+                        callback(403, {'Error':'Missing requred token in header or token is invalid'});
+                    }
+                });
+            } else {
+                callback(400, {'Error': 'Cart does not exist'});
+            }  
+        });
+    } else {
+        callback(403, {'Error':'Missing requred token in header or Payment Data'});
+    }
 }
 
 
