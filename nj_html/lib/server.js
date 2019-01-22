@@ -68,6 +68,9 @@ server.unifiedServer = (req, res) => {
 
         // Chose the handler this request should go to, if not found use the notfound hander
         var chosenHandler = typeof(server.router[trimmedPath]) !== 'undefined' ? server.router[trimmedPath] : handlers.notfound;
+
+        // if the request is within the public directory, use the public handler instead
+        chosenHandler = trimmedPath.indexOf('public/') > -1 ? handlers.public : chosenHandler;
         // Construct a data object to send to the hander
         var data = {
             'trimmedPath' : trimmedPath,
@@ -100,6 +103,31 @@ server.unifiedServer = (req, res) => {
                 res.setHeader('Content-Type', 'text/html');
                 payloadString = typeof(payload) == 'string' ? payload : '';
             }
+            if (contentType == 'favicon') {
+                res.setHeader('Content-Type', 'image/x-icon');
+                payloadString = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            if (contentType == 'jpg') {
+                res.setHeader('Content-Type', 'image/jpeg');
+                payloadString = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            if (contentType == 'ico') {
+                res.setHeader('Content-Type', 'image/x-icon');
+                payloadString = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            if (contentType == 'png') {
+                res.setHeader('Content-Type', 'image/png');
+                payloadString = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            if (contentType == 'css') {
+                res.setHeader('Content-Type', 'text/css');
+                payloadString = typeof(payload) !== 'undefined' ? payload : '';
+            }
+            if (contentType == 'plain') {
+                res.setHeader('Content-Type', 'text/html');
+                payloadString = typeof(payload) !== 'undefined' ? payload : '';
+            }
+
             //return response
             res.writeHead(statusCode);
             res.end(payloadString);
@@ -129,7 +157,9 @@ server.router = {
     'api/hello' : handlers.hello,
     'api/users' : handlers.users,
     'api/tokens' : handlers.tokens,
-    'api/checks' : handlers.checks
+    'api/checks' : handlers.checks,
+    'public' : handlers.public,
+    'favicon.ico' : handlers.favicon
 };
 
 // Init script
