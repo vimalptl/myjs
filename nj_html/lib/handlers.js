@@ -20,8 +20,8 @@ var handlers  = {};
      if (data.method == 'get') {
         // prepare data for interpolation
         var templateData = {
-            'head.title' : 'This is the title',
-            'head.description' : 'This is the meta description',
+            'head.title' : 'Uptime Monitoring - Made simple',
+            'head.description' : 'We offer free, simple uptime monitoring for HTTP/HTTPs sites of all kinds.  When your site goes down, will sent you a text as notification',
             'body.title' : 'Hello templated world!',
             'body.class' : 'index'
         }
@@ -45,6 +45,251 @@ var handlers  = {};
         callback(405, undefined, 'html');
      }
  }
+
+ // Create a new account
+ handlers.accountCreate = function(data, callback) {
+     // Reject any request that isn't a get
+     if (data.method == 'get') {
+        // prepare data for interpolation
+        var templateData = {
+            'head.title' : 'Create an Account',
+            'head.description' : 'Signup is easy and only takes a few seconds',
+            'body.class' : 'accountCreate'
+        }
+        // Read in the index template as a string
+        helpers.getTemplate('accountCreate',templateData,function(err, str) {
+            if (!err && str) {
+                // Add the universal header and footer
+                helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                    if (!err && str) {
+                        // return the page as html
+                        callback(200,str,'html');
+                    } else {
+                        callback(500, undefined, 'html');
+                    }
+                });
+            } else {
+                callback(500, undefined, 'html');
+            }
+        });
+     } else {
+        callback(405, undefined, 'html');
+     }
+ }
+
+ // delete an existing account account
+ handlers.accountDeleted = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Delete an account',
+           'head.description' : 'Delete an account',
+           'body.class' : 'accountDeleted'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('accountDeleted',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+ // edit an existing account account
+ handlers.accountEdit = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Edit an account',
+           'body.class' : 'accountEdit'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('accountEdit',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+ // Create Checks UI
+ handlers.checksCreate = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Create a Check',
+           'body.class' : 'checksCreate'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('checksCreate',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+ // Edit an existing Checks - UI
+ handlers.checksEdit = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Edit a Check',
+           'body.class' : 'checksEdit'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('checksEdit',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+ // List all Checks - UI
+ handlers.checksList = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Edit a Check',
+           'body.class' : 'checksList'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('checksList',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+
+ // Login
+ handlers.sessionCreate = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Login',
+           'body.class' : 'sessionCreate'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('sessionCreate',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+ // Log out
+ handlers.sessionDeleted = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Logout',
+           'body.class' : 'sessionDeleted'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('sessionDeleted',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+}
+
+
 
  // Favicon
  handlers.favicon = function(data,callback) {
@@ -722,24 +967,22 @@ handlers._checks.delete = function(data, callback) {
 
 
 // ping handler - can be used to monitor the process 
-handlers.ping = function (data, callback) {
+handlers.ping = function(data, callback) {
     // callback a http status code, and a payload object
     callback(200);
 };
 
 // sample handler
-handlers.hello = function (data, callback) {
+handlers.hello = function(data, callback) {
     // callback a http status code, and a payload object
     callback(200, { 'message': "Hello world, this is my first rest service with nodejs  :) "});
 };
 
 // not founct hander
-handlers.notfound = function (data, callback) {
+handlers.notfound = function(data, callback) {
     // callback a http status code, and a payload object
     callback(404);
 };
-
-
 
 
 // Export the module
