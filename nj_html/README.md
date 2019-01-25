@@ -1,4 +1,4 @@
-# Node JS -  Rest Project
+# Node JS -  Rest Project UI Development, Core Node Version
 master nodejs class - Nodejs Rest Service with html contentType
 
 ## Project structure
@@ -11,13 +11,19 @@ master nodejs class - Nodejs Rest Service with html contentType
 * '/lib/data.js  :  Instead of database we will be using files to store data, this is the file handling object.  This will use the .data directory for storage.
 * '/lib/server.js' :  Server Init and functions
 * './.data/'    :  .data directory was create with sub directory of /users, /checks and /tokens to store appropriate data from request calls.  Eventually this can be a database call.
-* './.template/' :   Server html templates based on path set in server.js
-
+* './template/' :   Server html templates based on path set in server.js
+* './public/' : Static Content such as app.css, app.js, images
 ## Service requirement - TODO
 
 * Content Type: HTML
-
-
+[accountCreate] - Create Account
+[accountDeleted] - Delete an existing account
+[accountEdit] - Edit an account
+[checksCreate] - Create checks to monitor for this user
+[checksEdit] - Edit existing checks for this user
+[checksList] - List out all the checks being monitored for this user
+[sessionCreate] - Login creates a session token
+[sessionDelete] - Logout deletes the session token
 
 * Content Type: JSON
 * api/users 
