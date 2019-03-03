@@ -119,6 +119,29 @@ app.logUserOut = function(redirectUser){
   });
 };
 
+// Log the user out then redirect them
+app.addToCart = function(itemCode){
+  // Set redirectUser to default to true
+  itemCode = typeof(itemCode) == 'string' ? itemCode : true;
+  
+  // Send the current token to the tokens endpoint to delete it
+  var newPayload = {
+    'itemcode' : itemCode,
+    'count' : 1
+  };
+//  alert(JSON.stringify(newPayload));
+  app.client.request(undefined,'api/cart','POST',undefined,newPayload,function(statusCode,responsePayload){
+    if(statusCode == 200){
+      // TODO: Display to user that its added to cart
+      return;
+    } else {
+      alert(statusCode);
+      return;
+    }
+  });
+};
+
+
 // Bind the forms
 app.bindForms = function(){
   if(document.querySelector("form")){
@@ -218,9 +241,9 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
   var functionToCall = false;
   // If account creation was successful, try to immediately log the user in
   if(formId == 'accountCreate'){
-    // Take the phone and password, and use it to log the user in
+    // Take the email and password, and use it to log the user in
     var newPayload = {
-      'phone' : requestPayload.phone,
+      'email' : requestPayload.email,
       'password' : requestPayload.password
     };
 
@@ -237,14 +260,14 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
       } else {
         // If successful, set the token and redirect the user
         app.setSessionToken(newResponsePayload);
-        window.location = '/checks/checklist';
+        window.location = '/menu/menulist';
       }
     });
   }
   // If login was successful, set the token in localstorage and redirect the user
   if(formId == 'sessionCreate'){
     app.setSessionToken(responsePayload);
-    window.location = '/checks/checklist';
+    window.location = '/menu/menulist';
   }
 
   // If forms saved successfully and they have success messages, show them
@@ -359,8 +382,8 @@ app.loadDataOnPage = function(){
   }
 
   // Logic for dashboard page
-  if(primaryClass == 'checksList'){
-    app.loadChecksListPage();
+  if(primaryClass == 'menusList'){
+    app.loadMenusListPage();
   }
 
   // Logic for check details page
@@ -371,24 +394,25 @@ app.loadDataOnPage = function(){
 
 // Load the account edit page specifically
 app.loadAccountEditPage = function(){
-  // Get the phone number from the current token, or log the user out if none is there
-  var phone = typeof(app.config.sessionToken.phone) == 'string' ? app.config.sessionToken.phone : false;
-  if(phone){
+  // Get the email from the current token, or log the user out if none is there
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
     // Fetch the user data
     var queryStringObject = {
-      'phone' : phone
+      'email' : email
     };
     app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
       if(statusCode == 200){
         // Put the data into the forms as values where needed
         document.querySelector("#accountEdit1 .firstNameInput").value = responsePayload.firstName;
         document.querySelector("#accountEdit1 .lastNameInput").value = responsePayload.lastName;
-        document.querySelector("#accountEdit1 .displayPhoneInput").value = responsePayload.phone;
+        document.querySelector("#accountEdit1 .addressInput").value = responsePayload.address;
+        document.querySelector("#accountEdit1 .displayPhoneInput").value = responsePayload.email;
 
-        // Put the hidden phone field into both forms
+        // Put the hidden email field into both forms
         var hiddenPhoneInputs = document.querySelectorAll("input.hiddenPhoneNumberInput");
         for(var i = 0; i < hiddenPhoneInputs.length; i++){
-            hiddenPhoneInputs[i].value = responsePayload.phone;
+            hiddenPhoneInputs[i].value = responsePayload.email;
         }
 
       } else {
@@ -402,39 +426,77 @@ app.loadAccountEditPage = function(){
 };
 
 // Load the dashboard page specifically
-app.loadChecksListPage = function(){
-  // Get the phone number from the current token, or log the user out if none is there
-  var phone = typeof(app.config.sessionToken.phone) == 'string' ? app.config.sessionToken.phone : false;
-  if(phone){
+app.loadMenusListPage = function(){
+  // Get the email from the current token, or log the user out if none is there
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
+      // Fetch the user data
+      var queryStringObject = {
+        'menutype' : "pizza"
+      };
+      app.client.request(undefined,'api/menus','GET',queryStringObject,undefined,function(statusCode,responsePayload) {
+        if(statusCode == 200){
+        // Determine how many checks the user has
+        var menuData = typeof(responsePayload) == 'object' && responsePayload instanceof Array  ? responsePayload : [];
+          if(menuData.length > 0){
+            // Show each created check as a new row in the table
+            menuData.forEach(function(menu){
+              // Make the check data into a table row
+              var table = document.getElementById("menusListTable");
+              var tr = table.insertRow(-1);
+              tr.classList.add('menuRow');
+              var td0 = tr.insertCell(0);
+              var td1 = tr.insertCell(1);
+              var td2 = tr.insertCell(2);
+              var td3 = tr.insertCell(3);
+              td0.innerHTML = '<img src="public/images/'+menu.Image.trim()+'.jpg" width="152px" height="133px">';
+              td1.innerHTML = menu.Name;
+              td2.innerHTML = menu.Price;
+              td3.innerHTML = '<div id="addToCartCTA" class="ctaWrapper"><button class="cta green" onClick="app.addToCart(\''+menu.Code+'\');">Add to cart</a></div>';
+            });
+          }      
+        } else {
+          console.log("Error trying to load check ID: ",checkId);
+        }
+    });
+  } else {
+    app.logUserOut();
+  }
+};
+
+// Load the Orders page specifically
+app.loadOrdersListPage = function(){
+  // Get the email from the current token, or log the user out if none is there
+  var email = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  if(email){
     // Fetch the user data
     var queryStringObject = {
-      'phone' : phone
+      'email' : email
     };
-    app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+    app.client.request(undefined,'api/orders','GET',queryStringObject,undefined,function(statusCode,responsePayload){
       if(statusCode == 200){
 
         // Determine how many checks the user has
-        var allChecks = typeof(responsePayload.checks) == 'object' && responsePayload.checks instanceof Array && responsePayload.checks.length > 0 ? responsePayload.checks : [];
+        var allOrders = typeof(responsePayload) == 'object' && responsePayload instanceof Array && responsePayload.checks.length > 0 ? responsePayload.checks : [];
         if(allChecks.length > 0){
 
           // Show each created check as a new row in the table
           allChecks.forEach(function(checkId){
             // Get the data for the check
             var newQueryStringObject = {
-              'id' : checkId
+              'menutype' : "pizza"
             };
-            app.client.request(undefined,'api/checks','GET',newQueryStringObject,undefined,function(statusCode,responsePayload){
+            app.client.request(undefined,'api/menus','GET',newQueryStringObject,undefined,function(statusCode,responsePayload){
               if(statusCode == 200){
-                var checkData = responsePayload;
+                var menuData = responsePayload;
                 // Make the check data into a table row
-                var table = document.getElementById("checksListTable");
+                var table = document.getElementById("menusListTable");
                 var tr = table.insertRow(-1);
-                tr.classList.add('checkRow');
+                tr.classList.add('menuRow');
                 var td0 = tr.insertCell(0);
                 var td1 = tr.insertCell(1);
-                var td2 = tr.insertCell(2);
                 var td3 = tr.insertCell(3);
-                var td4 = tr.insertCell(4);
+                var td2 = tr.insertCell(2);
                 td0.innerHTML = responsePayload.method.toUpperCase();
                 td1.innerHTML = responsePayload.protocol+'://';
                 td2.innerHTML = responsePayload.url;
@@ -447,14 +509,9 @@ app.loadChecksListPage = function(){
             });
           });
 
-          if(allChecks.length < 5){
-            // Show the createCheck CTA
-            document.getElementById("createCheckCTA").style.display = 'block';
-          }
-
         } else {
           // Show 'you have no checks' message
-          document.getElementById("noChecksMessage").style.display = 'table-row';
+          document.getElementById("noMenusMessage").style.display = 'table-row';
 
           // Show the createCheck CTA
           document.getElementById("createCheckCTA").style.display = 'block';

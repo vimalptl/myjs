@@ -15,6 +15,100 @@ var handlers  = {};
  * 
  */
 
+// List all Items in the cart - UI
+handlers.cartsList = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'Items in Cart',
+           'body.class' : 'cartsList'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('cartsList',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+ }
+
+// List all Orders - UI
+handlers.ordersList = function(data, callback) {
+    // Reject any request that isn't a get
+    if (data.method == 'get') {
+       // prepare data for interpolation
+       var templateData = {
+           'head.title' : 'List of Orders',
+           'body.class' : 'ordersList'
+       }
+       // Read in the index template as a string
+       helpers.getTemplate('ordersList',templateData,function(err, str) {
+           if (!err && str) {
+               // Add the universal header and footer
+               helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                   if (!err && str) {
+                       // return the page as html
+                       callback(200,str,'html');
+                   } else {
+                       callback(500, undefined, 'html');
+                   }
+               });
+           } else {
+               callback(500, undefined, 'html');
+           }
+       });
+    } else {
+       callback(405, undefined, 'html');
+    }
+ }
+ 
+ // List all Menu - UI
+ handlers.menusList = function(data, callback) {
+     // Reject any request that isn't a get
+     if (data.method == 'get') {
+        // prepare data for interpolation
+        var templateData = {
+            'head.title' : 'Menu Items',
+            'body.class' : 'menusList'
+        }
+        // Read in the index template as a string
+        helpers.getTemplate('menusList',templateData,function(err, str) {
+            if (!err && str) {
+                // Add the universal header and footer
+                helpers.addUniversialTemplate(str, templateData,function(err,str) {
+                    if (!err && str) {
+                        // return the page as html
+                        callback(200,str,'html');
+                    } else {
+                        callback(500, undefined, 'html');
+                    }
+                });
+            } else {
+                callback(500, undefined, 'html');
+            }
+        });
+     } else {
+        callback(405, undefined, 'html');
+     }
+  }
+ 
+
+
+
+
 handlers.index = function(data, callback) {
     // Reject any request that isn't a get
     if (data.method == 'get') {
@@ -137,38 +231,6 @@ handlers.accountEdit = function(data, callback) {
       callback(405, undefined, 'html');
    }
 }
-
-
-// List all Orders - UI
-handlers.ordersList = function(data, callback) {
-   // Reject any request that isn't a get
-   if (data.method == 'get') {
-      // prepare data for interpolation
-      var templateData = {
-          'head.title' : 'Edit a Check',
-          'body.class' : 'checksList'
-      }
-      // Read in the index template as a string
-      helpers.getTemplate('checksList',templateData,function(err, str) {
-          if (!err && str) {
-              // Add the universal header and footer
-              helpers.addUniversialTemplate(str, templateData,function(err,str) {
-                  if (!err && str) {
-                      // return the page as html
-                      callback(200,str,'html');
-                  } else {
-                      callback(500, undefined, 'html');
-                  }
-              });
-          } else {
-              callback(500, undefined, 'html');
-          }
-      });
-   } else {
-      callback(405, undefined, 'html');
-   }
-}
-
 
 // Login
 handlers.sessionCreate = function(data, callback) {
@@ -700,27 +762,70 @@ handlers.menus = function(data, callback) {
 // Container for all the tokens methods
 handlers._menus =  {};
 
+// Retrieve Individual Menu Item
+/* usage: 
+                handlers._menus.getItemDetails('P10IGFDX', function(data) {
+                    if (data) {
+                        console.log(data.Code + " " + data.Price);
+                    } else {
+                        console.log("Item not found");
+                    }
+                });
+*/
+handlers._menus.getItemDetails = function(itemCode, callback) {
+    itemCode = typeof(itemCode) == 'string' && itemCode.length > 0 ? itemCode : false;
+     if (itemCode) {
+        // Lookup menu
+        _data.read('menus','menu',function(err, menuData) {
+            if (!err && menuData) {
+                    // Lookup item in menu
+                    menuData.forEach(item => {
+                         if (item.Code == itemCode) {
+                            console.log(item.Code + ":::");
+                             callback(item);
+                         }
+                     })                       
+            } else {
+                callback(false);
+            }
+        });
+    } else {
+        callback(false) ;
+    }  
+ }; 
 
 // Menus - Get
 // You can get the menu with or without a token
 handlers._menus.get = function(data, callback) {
     // menus for the required field.
     var menuType = typeof(data.queryStringObject.menutype) == 'string' && data.queryStringObject.menutype.trim().length > 0 ? data.queryStringObject.menutype.trim() : false;
-    console.log("Print MenuType: " + menuType)
+    var itemType = typeof(data.queryStringObject.itemtype) == 'string' && data.queryStringObject.itemtype.trim().length > 0 ? data.queryStringObject.itemtype.trim() : false;
+    // console.log("Print MenuType: " + menuType)
+    // console.log("Print ItemType: " + itemType)
     if (menuType) {
         // Lookup menu
-        _data.read('menus',menuType,function(err, menuData) {
+        _data.read('menus','menu',function(err, menuData) {
             if (!err && menuData) {
-                callback(200,menuData);
+                if (itemType) {
+                    // Lookup item in menu
+                    menuData.forEach(item => {
+                         if (item.Code == itemType) {
+                            //  console.log(item.Code + ":::");
+                             callback(200,item);
+                         }
+                     })                       
+                } else {
+                    callback(200,menuData);
+                }    
             } else {
                 callback(404);
             }
         });
-
     } else {
-       callback(400, {'Error': 'Missing required field'}) ;
+        callback(400, {'Error': 'Missing required field'}) ;
     }  
 };
+
 
 // Checks - Post
 // Requred data: id, protocol, url, method, successCode, timeoutSeconds
@@ -762,94 +867,115 @@ handlers._cart =  {};
 // Requred data: id (generated not included), email, itemcode, count
 // Optional Data: token in header
 handlers._cart.post = function(data, callback) {
-    var email = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
     var itemCode = typeof(data.payload.itemcode) == 'string' &&  data.payload.itemcode.trim().length > 0  ?  data.payload.itemcode.trim() : false;
-//    var successCodes = typeof(data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes : false;
     var count = typeof(data.payload.count) == 'number' &&  data.payload.count >= 1  ? data.payload.count : false; 
-    // User integer value only for node class  eg. 10.00 as 1000
-    var price = typeof(data.payload.price) == 'number' &&  data.payload.price >= 0  ? data.payload.price : false; 
-    // TODO: Validate email and itemCode before saving to cart
-    //console.log("email: " + email + " itemCode: " + itemCode + " count:" + count + " price:" + price)
-    if (email && itemCode && count && price) {
-        // Get token from the headers
-        var token = typeof(data.headers.token) == 'string' && data.headers.token.trim().length > 0 ? data.headers.token.trim() : false;
-        // Lookup the user by reading the token
-        _data.read('tokens', token, function(err, tokenData) {
-            if (!err && tokenData) {
-                var userEmail = tokenData.email;
-                // look up cart based on token - cart will exist as long as token exist
-                _data.read('carts',tokenData.id, function(err, cartData) {
-                    // if cart exist than add to cart else create
-                    if (!err && cartData) {
-                        var itemLists = typeof(cartData.itemlists) == 'object' && cartData.itemlists instanceof Array ? cartData.itemlists : [];                        
-                        // add to itemList
-                        var itemObject = {
-                            'code' : itemCode,
-                            'count' : count,
-                            'price' : price,
-                            'total' : price * count
-                        };
-                        // Add the itemObject to the carts itemlist
-                        cartData.itemlists = itemLists;
-                        cartData.itemlists.push(itemObject);
-                        // Save the new cart Data
-                        _data.update('carts',tokenData.id,cartData, function(err) {
-                            if (!err) {
-                                // TODO -- calculate total balance price of all items in the list.
-                                // lets add sales tax of 10% -- govt is little too greedy :)
-                                // this can be done by summing up the total.                                                               
-                                handlers._cart.calcCartTotals(tokenData.id, function(calcd) {
-                                    if (!calcd) {
-                                        callback(500, {'Error' : 'Could not calculate cart totals'});
-                                    }
-                                });                                                          
-                                callback(200);
-                            } else {
-                                callback(500, {'Error':'Could not update the cart with the new item'});
-                            }
-                        });
-                    } else {
-                        // create the cart object, and include the user email
-                        var total = price * count;
-                        var cartObject = {
-                            'id' : tokenData.id,
-                            'email' : userEmail,
-                            'itemlists' : [ {
-                                'code' : itemCode,
-                                'count' : count,
-                                'price' : price,
-                                'total' : total
-                            }],
-                            'totals' : 0,
-                            'taxes' : 0,
-                            'pay' : 0
-                        };
-                        //Store the Cart
-                        _data.create('carts', tokenData.id, cartObject, function(err) {
-                            if (err) {
-                                callback(500, {'Error':'Could not create a new cart'});
-                            } else {
-                                // TODO -- calculate total price of all items in the list.
-                                // this can be done by summing up the total.      
-                                handlers._cart.calcCartTotals(tokenData.id, function(calcd) {
-                                    if (!calcd) {
-                                        callback(500, {'Error' : 'Could not calculate cart totals'});
-                                    }
-                                });                                                          
-                                callback(200);
-                            }
-                        });                            
-                    }
-                });
+    // Retrieve item details    
+    if (itemCode) {
+        // Lookup menu
+        _data.read('menus','menu',function(err, menuData) {
+            if (!err && menuData) {
+                // Lookup item in menu
+                var itemData = {};
+                menuData.forEach(item => {
+                if (item.Code == itemCode) {
+                   console.log(item.Code + ":::");
+                    itemData = item;
+                }
+                });                       
+                // User integer value only for node class  eg. 10.00 as 1000
+                var price = 0;
+                if (itemData !== null) {
+                    price = Number(itemData.Price);
+                }
+                price = typeof(price) == 'number'  ? price : false;    
+                // TODO: Validate email and itemCode before saving to cart
+                console.log(" itemCode: " + itemCode + " count:" + count + " price:" + price)
+                if (itemCode && count && price) {
+                    // Get token from the headers
+                    var token = typeof(data.headers.token) == 'string' && data.headers.token.trim().length > 0 ? data.headers.token.trim() : false;
+                    // Lookup the user by reading the token
+                    _data.read('tokens', token, function(err, tokenData) {
+                        if (!err && tokenData) {
+                            var userEmail = tokenData.email;
+                            // look up cart based on token - cart will exist as long as token exist
+                            _data.read('carts',tokenData.id, function(err, cartData) {
+                                // if cart exist than add to cart else create
+                                if (!err && cartData) {
+                                    var itemLists = typeof(cartData.itemlists) == 'object' && cartData.itemlists instanceof Array ? cartData.itemlists : [];                        
+                                    // add to itemList
+                                    var itemObject = {
+                                        'code' : itemCode,
+                                        'count' : count,
+                                        'price' : price,
+                                        'total' : price * count
+                                    };
+                                    // Add the itemObject to the carts itemlist
+                                    cartData.itemlists = itemLists;
+                                    cartData.itemlists.push(itemObject);
+                                    // Save the new cart Data
+                                    _data.update('carts',tokenData.id,cartData, function(err) {
+                                        if (!err) {
+                                            // TODO -- calculate total balance price of all items in the list.
+                                            // lets add sales tax of 10% -- govt is little too greedy :)
+                                            // this can be done by summing up the total.                                                               
+                                            handlers._cart.calcCartTotals(tokenData.id, function(calcd) {
+                                                if (!calcd) {
+                                                    callback(500, {'Error' : 'Could not calculate cart totals'});
+                                                }
+                                            });                                                          
+                                            callback(200);
+                                        } else {
+                                            callback(500, {'Error':'Could not update the cart with the new item'});
+                                        }
+                                    });
+                                } else {
+                                    // create the cart object, and include the user email
+                                    var total = price * count;
+                                    var cartObject = {
+                                        'id' : tokenData.id,
+                                        'email' : userEmail,
+                                        'itemlists' : [ {
+                                            'code' : itemCode,
+                                            'count' : count,
+                                            'price' : price,
+                                            'total' : total
+                                        }],
+                                        'totals' : 0,
+                                        'taxes' : 0,
+                                        'pay' : 0
+                                    };
+                                    //Store the Cart
+                                    _data.create('carts', tokenData.id, cartObject, function(err) {
+                                        if (err) {
+                                            callback(500, {'Error':'Could not create a new cart'});
+                                        } else {
+                                            // TODO -- calculate total price of all items in the list.
+                                            // this can be done by summing up the total.      
+                                            handlers._cart.calcCartTotals(tokenData.id, function(calcd) {
+                                                if (!calcd) {
+                                                    callback(500, {'Error' : 'Could not calculate cart totals'});
+                                                }
+                                            });                                                          
+                                            callback(200);
+                                        }
+                                    });                            
+                                }
+                            });
+                        } else {
+                            console.log("Forbidden here");
+                            callback(403);
+                        }
+                    });
+            
+                } else {
+                    callback(400, { 'Error': 'Missing required inputs, or inputs are invalid'});
+                }
             } else {
-                console.log("Forbidden here");
-                callback(403);
+                callback(400, { 'Error': 'Not a valid menu Item'});
             }
         });
-
-    } else {
-        callback(400, { 'Error': 'Missing required inputs, or inputs are invalid'});
     }
+
 };
 
 // Cart - Get

@@ -33,8 +33,6 @@ body,p,h1,h2,h3,h4,h5,h6,div,span,header,footer,img,a,a:hover,a:active,a:visited
   top: 0;
   left: 0;
   width: 100%;
-  padding: 20px 0;
-  min-width: 1200px;
 }
 
 .header ul{
@@ -74,7 +72,7 @@ body.loggedIn .header ul li.loggedOut{
 }
 
 .header .logo img{
-    width: 50px;
+    width: 100px;
 }
 
 .content {
@@ -276,14 +274,14 @@ td a, td a:hover, td a:active{
 
 /* Page specific styles for dashboard */
 
-#noChecksMessage td{
+#noMenusMessage td{
   text-align: center;
   font-style: italic;
   font-size: 20px;
   padding: 20px;
 }
 
-#noChecksMessage{
+#noMenusMessage{
   display: none;
 }
 
