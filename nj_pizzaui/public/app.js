@@ -11,6 +11,8 @@ app.config = {
   'sessionToken' : false
 };
 
+app.cartList = [];
+
 // AJAX Client (for RESTful API)
 app.client = {}
 
@@ -121,6 +123,7 @@ app.logUserOut = function(redirectUser){
 
 // Log the user out then redirect them
 app.addToCart = function(itemCode){
+
   // Set redirectUser to default to true
   itemCode = typeof(itemCode) == 'string' ? itemCode : true;
   
@@ -133,6 +136,12 @@ app.addToCart = function(itemCode){
   app.client.request(undefined,'api/cart','POST',undefined,newPayload,function(statusCode,responsePayload){
     if(statusCode == 200){
       // TODO: Display to user that its added to cart
+      // Find and set counter on cart to # items in cart.
+      if ( document.querySelector("#lblCartCount").innerHTML == null) {
+        document.querySelector("#lblCartCount").innerHTML = '1';
+      } else {
+        document.querySelector("#lblCartCount").innerHTML++;
+      }
       return;
     } else {
       alert(statusCode);
@@ -141,6 +150,30 @@ app.addToCart = function(itemCode){
   });
 };
 
+
+app.getCartList = function() {
+  var newPayload = {}
+  app.client.request(undefined,'api/cart','GET',undefined,newPayload,function(statusCode,responsePayload){
+    if(statusCode == 200){
+      // Get list of cart items
+      var cart = responsePayload;
+      // Add cart count to header
+      if (cart !== null) {
+        if (cart.itemlists.length == 0) {
+          document.querySelector("#lblCartCount").innerHTML = '';
+        } else{
+          document.querySelector("#lblCartCount").innerHTML = cart.itemlists.length;
+        }
+      }
+
+      alert(JSON.stringify(cartList));
+      return cartList;
+    } else {
+      return {};
+    }
+  });
+
+}
 
 // Bind the forms
 app.bindForms = function(){
@@ -591,6 +624,8 @@ app.init = function(){
 
   // Get the token from localstorage
   app.getSessionToken();
+
+  app.cartList = app.getCartList();
 
   // Renew token
   app.tokenRenewalLoop();

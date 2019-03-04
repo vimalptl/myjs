@@ -14,7 +14,16 @@
     <link type="image/x-icon" rel="icon" href="favicon.ico">
     <script type="text/javascript" charset="utf-8" src="public/app.js"></script>
     <link rel="stylesheet" type="text/css" href="public/app.css" />
-
+    <link rel="stylesheet" type="text/css" href="/public/store.css">
+    <style>
+      #lblCartCount {
+        font-size: 7px;
+        background: #ff0000;
+        color: #fff;
+        padding: 0 5px;
+        vertical-align: top;
+        }
+    </style>
   </head>
   <body class="{body.class}">
     <!-- Page Wrapper -->
@@ -43,7 +52,7 @@
             <a href="/orders/orderlist">Orders</a>
           </li>
           <li class="loggedIn">
-            <a href="/cart/view">Cart</a>
+            <a href="/cart/view">Cart<span id="lblCartCount"></span></a>
           </li>
           <li class="loggedIn">
             <a href="/account/edit">Account Settings</a>
