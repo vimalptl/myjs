@@ -72,13 +72,13 @@ body.loggedIn .header ul li.loggedOut{
 }
 
 .header .logo img{
-    width: 100px;
+    width: 75px;
 }
 
 .content {
-  margin-top: 150px;
+  margin-top: 25px;
   width: 1000px;
-  margin: 150px auto;
+  margin: 50px auto;
 }
 
 .footer{

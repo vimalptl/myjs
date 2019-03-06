@@ -11,7 +11,7 @@ app.config = {
   'sessionToken' : false
 };
 
-app.cartList = [];
+app.cart = {};
 
 // AJAX Client (for RESTful API)
 app.client = {}
@@ -151,7 +151,7 @@ app.addToCart = function(itemCode){
 };
 
 
-app.getCartList = function() {
+app.getCart =  function()  {
   var newPayload = {}
   app.client.request(undefined,'api/cart','GET',undefined,newPayload,function(statusCode,responsePayload){
     if(statusCode == 200){
@@ -159,21 +159,57 @@ app.getCartList = function() {
       var cart = responsePayload;
       // Add cart count to header
       if (cart !== null) {
-        if (cart.itemlists.length == 0) {
+        if (cart.itemlists == null || cart.itemlists.length == 0) {
           document.querySelector("#lblCartCount").innerHTML = '';
         } else{
           document.querySelector("#lblCartCount").innerHTML = cart.itemlists.length;
         }
       }
-
-      alert(JSON.stringify(cartList));
-      return cartList;
+      return cart;
     } else {
       return {};
     }
   });
 
-}
+};
+
+
+
+    // Manipulate the DOM to display the order summary on the right panel.
+    // Note: For simplicity, we're just using template strings to inject data in the DOM,
+    // but in production you would typically use a library like React to manage this effectively.
+app.displayOrderSummary = function() {
+      app.client.request(undefined,'api/cart','GET',undefined,{},function(statusCode,responsePayload){
+        if(statusCode == 200){
+          // Get list of cart items
+          var cart = responsePayload;
+          // Add cart count to header
+          if (cart !== null) {
+            const orderItems = document.getElementById('order-items');
+            const orderTotal = document.getElementById('order-total');
+            // Build and append the line items to the order summary.
+            var total = 0;
+            cart.itemlists.forEach(function(data) {
+              let lineItemPrice = data.price * data.count;
+              let lineItem = document.createElement('div');
+              lineItem.classList.add('line-item');
+              lineItem.innerHTML = '<div class=\"label\"><p class=\"product\">'+data.code+'</p></div><p class=\"count\">'+data.count+' x '+data.price+'</p><p class=\"price\">'+lineItemPrice+'</p>'
+              orderItems.appendChild(lineItem);
+              total += lineItemPrice;
+            });
+            // Add the subtotal and total to the order summary.
+            orderTotal.querySelector('[data-subtotal]').innerText = total;
+            orderTotal.querySelector('[data-total]').innerText = total;
+            document.getElementById('main').classList.remove('loading');      
+          }
+        } else {
+          // error
+          alert(statusCode);
+        }
+      });
+  
+    }
+
 
 // Bind the forms
 app.bindForms = function(){
@@ -419,6 +455,12 @@ app.loadDataOnPage = function(){
     app.loadMenusListPage();
   }
 
+  // Logic for dashboard page
+  if(primaryClass == 'cartsList'){
+    app.displayOrderSummary()
+  }
+
+
   // Logic for check details page
   if(primaryClass == 'checksEdit'){
     app.loadChecksEditPage();
@@ -625,8 +667,8 @@ app.init = function(){
   // Get the token from localstorage
   app.getSessionToken();
 
-  app.cartList = app.getCartList();
-
+  app.cart = app.getCart();
+  
   // Renew token
   app.tokenRenewalLoop();
 
